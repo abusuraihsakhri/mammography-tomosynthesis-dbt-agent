@@ -8,7 +8,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 import pytest
 from enrichment import (
     OverviewEngine,
-    3dVolumeRenderingAndSliceNavigationEngine,
+    Engine_3dVolumeRenderingAndSliceNavigationEngine,
     MicrocalcificationClusterAnalysisEngine,
     LesionSegmentationWith3dContouringEngine,
     BilateralComparisonAndTemporalChangeDetectionEngine,

@@ -62,7 +62,7 @@ class OverviewEngine:
 # 2. 3D VOLUME RENDERING AND SLICE NAVIGATION
 # =============================================================================
 @dataclass
-class 3dVolumeRenderingAndSliceNavigationEngineResult:
+class Engine_3dVolumeRenderingAndSliceNavigationEngineResult:
     feature_name: str = "3D Volume Rendering and Slice Navigation"
     status: str = "OPTIMAL"
     score: float = 0.0
@@ -71,16 +71,16 @@ class 3dVolumeRenderingAndSliceNavigationEngineResult:
     recommendations: List[str] = field(default_factory=list)
     timestamp: str = field(default_factory=lambda: datetime.datetime.now(datetime.timezone.utc).isoformat())
 
-class 3dVolumeRenderingAndSliceNavigationEngine:
+class Engine_3dVolumeRenderingAndSliceNavigationEngine:
     """
     3D Volume Rendering and Slice Navigation: **Implementation:** Add interactive 3D volume rendering for tomosynthesis datasets.
     """
     def __init__(self, threshold: float = 1.0, config: Optional[Dict[str, Any]] = None):
         self.threshold = threshold
         self.config = config or {}
-        self.history: List[3dVolumeRenderingAndSliceNavigationEngineResult] = []
+        self.history: List[Engine_3dVolumeRenderingAndSliceNavigationEngineResult] = []
 
-    def evaluate(self, primary_value: float, secondary_value: float = 0.0, **kwargs) -> 3dVolumeRenderingAndSliceNavigationEngineResult:
+    def evaluate(self, primary_value: float, secondary_value: float = 0.0, **kwargs) -> Engine_3dVolumeRenderingAndSliceNavigationEngineResult:
         alerts = []
         recs = []
         status = "OPTIMAL"
@@ -97,7 +97,7 @@ class 3dVolumeRenderingAndSliceNavigationEngine:
         else:
             recs.append("Parameters nominal under standard operating bounds.")
 
-        res = 3dVolumeRenderingAndSliceNavigationEngineResult(
+        res = Engine_3dVolumeRenderingAndSliceNavigationEngineResult(
             feature_name="3D Volume Rendering and Slice Navigation",
             status=status,
             score=score,
@@ -415,7 +415,7 @@ class MammographytomosynthesisdbtagentEnrichmentSuite:
     """Master coordinator executing all enriched domain features."""
     def __init__(self):
         self.overviewengine = OverviewEngine()
-        self.3dvolumerenderingand = 3dVolumeRenderingAndSliceNavigationEngine()
+        self.engine_3dvolumerenderingand = Engine_3dVolumeRenderingAndSliceNavigationEngine()
         self.microcalcificationcl = MicrocalcificationClusterAnalysisEngine()
         self.lesionsegmentationwi = LesionSegmentationWith3dContouringEngine()
         self.bilateralcomparisona = BilateralComparisonAndTemporalChangeDetectionEngine()
@@ -426,7 +426,7 @@ class MammographytomosynthesisdbtagentEnrichmentSuite:
     def execute_all(self, primary_val: float = 1.5, secondary_val: float = 0.5) -> Dict[str, Any]:
         results = {}
         results["OverviewEngine"] = self.overviewengine.evaluate(primary_val, secondary_val)
-        results["3dVolumeRenderingAndSliceNavigationEngine"] = self.3dvolumerenderingand.evaluate(primary_val, secondary_val)
+        results["Engine_3dVolumeRenderingAndSliceNavigationEngine"] = self.engine_3dvolumerenderingand.evaluate(primary_val, secondary_val)
         results["MicrocalcificationClusterAnalysisEngine"] = self.microcalcificationcl.evaluate(primary_val, secondary_val)
         results["LesionSegmentationWith3dContouringEngine"] = self.lesionsegmentationwi.evaluate(primary_val, secondary_val)
         results["BilateralComparisonAndTemporalChangeDetectionEngine"] = self.bilateralcomparisona.evaluate(primary_val, secondary_val)
