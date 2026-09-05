@@ -3,12 +3,14 @@ Automated Pytest Test Suite for Mammography Tomosynthesis Dbt Agent.
 Domain: Clinical & Biomedical AI
 Standard: CAP / CLSI / ISO Standards
 """
+import os
 import sys
+import warnings
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import pytest
-from agents.base import PHIGuard, AuditLogger, SecurityException
+from agents.base import PHIGuard, AuditLogger, AuditTrail, SecurityException
 from agents.models import SystemTaskPayload, UrgencyLevel, SystemIntegrityStatus
 from agents.workers import InvariantQCWorker, SafetyEscalationWorker, ProtocolConformanceWorker
 from agents.supervisor import SystemSupervisor
@@ -21,6 +23,15 @@ def test_phi_guard_enforcement():
 
     # Clean text passes
     PHIGuard.assert_no_phi("Analytical assay specimen KEY-001 optimal")
+
+
+def test_phi_guard_redaction():
+    """Test that PHI is properly redacted from text."""
+    dirty = "Contact patient at 555-123-4567 or MRN-12345"
+    redacted = PHIGuard.redact_phi(dirty)
+    assert "555-123-4567" not in redacted
+    assert "MRN-12345" not in redacted
+    assert "[REDACTED_IDENTIFIER]" in redacted
 
 
 def test_specialized_workers():
@@ -63,3 +74,50 @@ def test_supervisor_consensus_and_audit():
     assert main(["audit", "--task-id", "CLI-TEST-01"]) == 0
     assert main(["chat", "Explain", "specifications"]) == 0
     assert main(["verify-audit"]) == 0
+
+
+def test_audit_trail_ephemeral_key_warning():
+    """Test that AuditTrail warns when AUDIT_SECRET_KEY is not set."""
+    # Ensure the env var is not set for this test
+    original_key = os.environ.pop("AUDIT_SECRET_KEY", None)
+    try:
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            trail = AuditTrail()
+            # Check that a RuntimeWarning was raised about the ephemeral key
+            runtime_warnings = [x for x in w if issubclass(x.category, RuntimeWarning)]
+            assert len(runtime_warnings) >= 1
+            assert "AUDIT_SECRET_KEY" in str(runtime_warnings[0].message)
+            # Verify the key starts with "ephemeral-"
+            assert trail.secret_key.startswith(b"ephemeral-")
+    finally:
+        # Restore original env var if it existed
+        if original_key is not None:
+            os.environ["AUDIT_SECRET_KEY"] = original_key
+
+
+def test_audit_trail_with_explicit_key():
+    """Test that AuditTrail uses explicit key without warning."""
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        trail = AuditTrail(secret_key="my-test-key-12345")
+        runtime_warnings = [x for x in w if issubclass(x.category, RuntimeWarning)]
+        assert len(runtime_warnings) == 0
+        assert trail.secret_key == b"my-test-key-12345"
+
+
+def test_audit_trail_integrity_tampering():
+    """Test that AuditTrail detects tampering with the chain."""
+    trail = AuditTrail(secret_key="tamper-test-key")
+    trail.log("test", "test_tier", "TEST_EVENT", {"data": "value1"})
+    trail.log("test", "test_tier", "TEST_EVENT", {"data": "value2"})
+
+    # Integrity should hold initially
+    assert trail.verify_integrity() is True
+
+    # Tamper with a log entry
+    if trail.logs:
+        trail.logs[0]["payload_hash"] = "tampered_hash"
+
+    # Integrity check should fail after tampering
+    assert trail.verify_integrity() is False
