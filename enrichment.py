@@ -1,6 +1,6 @@
 """
 Enrichment Feature Implementation for mammography-tomosynthesis-dbt-agent.
-Generated based on domain-specific requirements in specifications.
+These are generic numeric threshold wrappers; no imaging or segmentation is implemented.
 """
 from dataclasses import dataclass, field
 from typing import Dict, Any, List, Optional
