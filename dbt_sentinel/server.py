@@ -4,13 +4,14 @@ FastAPI REST API Server for DBT-Sentinel: Digital Breast Tomosynthesis Slice Rec
 from typing import Dict, Any
 from .models import FrontierPayload
 from .agents import DBTSentinelCoordinator
+from agents.base import SecurityException
 
 coordinator = DBTSentinelCoordinator()
 
 
 def create_app():
     try:
-        from fastapi import FastAPI
+        from fastapi import FastAPI, HTTPException
         from pydantic import BaseModel, Field
 
         app = FastAPI(
@@ -46,7 +47,10 @@ def create_app():
                 is_critical_flag=req.is_critical_flag,
                 attributes=req.attributes,
             )
-            return coordinator.process(payload)
+            try:
+                return coordinator.process(payload)
+            except SecurityException:
+                raise HTTPException(status_code=422, detail="Use synthetic data only.") from None
 
         @app.post("/api/chat")
         def api_chat(req: ChatRequest):
