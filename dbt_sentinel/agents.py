@@ -93,7 +93,7 @@ class DBTSentinelCoordinator:
             "critical_count": crit_count,
             "warning_count": warn_count,
             "alerts": [a.to_dict() for a in all_alerts],
-            "standard_specification": "ACR Digital Breast Tomosynthesis Standards",
+            "standard_specification": "Demonstration-only thresholds; not clinically validated",
             "consensus_summary": f"Consensus evaluation completed across 3 sub-agents with status [{status.value}].",
         }
 
@@ -103,8 +103,8 @@ class DBTSentinelCoordinator:
     def query_supervisory_chat(self, query: str) -> str:
         q = query.strip().lower()
         if "status" in q or "ledger" in q:
-            return f"DBT-Sentinel: Digital Breast Tomosynthesis Slice Reconstruction Agent currently managing {len(self.execution_ledger)} execution tasks in air-gapped memory."
+            return f"DBT-Sentinel: Digital Breast Tomosynthesis Slice Reconstruction Agent holds {len(self.execution_ledger)} synthetic tasks in process memory."
         elif "standard" in q or "spec" in q:
-            return "Active runtime operating strictly according to ACR Digital Breast Tomosynthesis Standards specifications."
+            return "This demo is not validated against ACR Digital Breast Tomosynthesis Standards; its cutoffs are illustrative only."
         else:
-            return f"DBT-Sentinel: Digital Breast Tomosynthesis Slice Reconstruction Agent executive coordinator online. Zero-telemetry on-premises surveillance active."
+            return f"DBT-Sentinel: Digital Breast Tomosynthesis Slice Reconstruction Agent executive coordinator online. This is a synthetic-input, rules-based demonstration; it does not analyze mammograms."
