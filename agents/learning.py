@@ -1,5 +1,5 @@
 """
-Autonomous Bayesian Calibration & Active Learning Feedback Engine for mammography-tomosynthesis-dbt-agent.
+Simple agreement-based feedback tracker (not Bayesian calibration) for mammography-tomosynthesis-dbt-agent.
 """
 import math
 from typing import Dict, Any, List, Optional
