@@ -3,9 +3,11 @@ FastAPI REST API Server for Mammography Tomosynthesis Dbt Agent.
 """
 from typing import Dict, Any, List
 from pathlib import Path
+import os
+import hmac
 from fastapi.responses import FileResponse
 from .base import SecurityException
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header
 from pydantic import BaseModel
 from .base import AuditLogger, PHIGuard
 from .models import SystemTaskPayload, ConsensusDossier
@@ -57,10 +59,26 @@ def api_chat(req: ChatRequest):
 
 
 @app.get("/api/audit/logs")
-def api_audit_logs():
+def api_audit_logs(x_audit_token: str | None = Header(default=None, alias="X-Audit-Token")):
+    """Audit metadata access requires a distinct read token, disabled by default."""
+    read_token = os.getenv("AUDIT_READ_TOKEN")
+    if not read_token:
+        raise HTTPException(status_code=503, detail="Audit log access is not configured.")
+    if not x_audit_token or not hmac.compare_digest(x_audit_token, read_token):
+        raise HTTPException(status_code=403, detail="Not authorized to read audit logs.")
     return {"audit_trail": AuditLogger.get_trail(), "verified": AuditLogger.verify_integrity()}
 
 
 @app.get("/", include_in_schema=False)
 def index():
     return FileResponse(Path(__file__).resolve().parent.parent / "web" / "index.html")
+
+
+@app.get("/app.mjs", include_in_schema=False)
+def browser_app_module():
+    return FileResponse(Path(__file__).resolve().parent.parent / "web" / "app.mjs", media_type="text/javascript")
+
+
+@app.get("/logic.mjs", include_in_schema=False)
+def browser_rules_module():
+    return FileResponse(Path(__file__).resolve().parent.parent / "web" / "logic.mjs", media_type="text/javascript")
