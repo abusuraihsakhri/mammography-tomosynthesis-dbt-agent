@@ -1,7 +1,7 @@
 """
 FastAPI REST API Server for Mammography Tomosynthesis Dbt Agent.
 """
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from pathlib import Path
 import os
 import hmac
@@ -59,7 +59,7 @@ def api_chat(req: ChatRequest):
 
 
 @app.get("/api/audit/logs")
-def api_audit_logs(x_audit_token: str | None = Header(default=None, alias="X-Audit-Token")):
+def api_audit_logs(x_audit_token: Optional[str] = Header(default=None, alias="X-Audit-Token")):
     """Audit metadata access requires a distinct read token, disabled by default."""
     read_token = os.getenv("AUDIT_READ_TOKEN")
     if not read_token:
