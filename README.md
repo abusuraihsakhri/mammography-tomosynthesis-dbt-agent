@@ -1,208 +1,86 @@
-# Mammography Tomosynthesis Dbt Agent
+# DBT Sentinel — Synthetic Rules Demonstration
 
-> **Domain:** Diagnostic Radiology & Medical Imaging AI
-> **Reference Guidelines & Standards:** American College of Radiology (ACR) BI-RADS & Fleischner Society
+A browser and Python toolkit for deterministic threshold checks on **synthetic numeric inputs**. The primary workflow evaluates a task against three fixed rules, produces a JSON dossier, and optionally records an in-memory HMAC audit chain when using Python.
 
-<div align="center">
+**Important limitation:** Despite the original name and worker class names, the project **does not** load DICOM data, reconstruct digital breast tomosynthesis images, detect microcalcifications or masses, assign BI-RADS categories, or implement validated clinical thresholds. It must not be used for diagnosis, triage, clinical quality assurance, or medical decisions.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB.svg?logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688.svg?logo=fastapi&logoColor=white)
-![Audit Trail](https://img.shields.io/badge/Audit-HMAC--SHA256_Tamper--Evident-brightgreen.svg)
-![Zero-PHI Guard](https://img.shields.io/badge/Guard-Zero--PHI_Outbound-blue.svg)
-![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker&logoColor=white)
+## Browser demonstration
 
-</div>
+The static interface is in [web/index.html](web/index.html). It needs no Python runtime or server-side API; evaluation uses JavaScript rules tested in CI. Features include synthetic-input validation, session counters, readable JSON output, and JSON download. Browser results have `audit_hash: null` because no cryptographic signature is created.
 
----
+To preview locally:
 
-## 📖 What It Does
+~~~bash
+python -m http.server 8080 --directory web
+~~~
 
-Mammography Tomosynthesis Dbt Agent is an enterprise-grade analytical platform for Digital Breast Tomosynthesis (DBT) imaging workflows. It provides deterministic evaluation of imaging parameters, multi-tier risk classification, and cryptographic audit trail generation for clinical AI applications.
+Open **http://localhost:8080/**. An HTTP server is needed because ES modules may not load from `file://`.
 
-The system orchestrates multiple specialized workers (QC Invariant, Safety Escalation, Protocol Conformance) to evaluate imaging data against CAP/CLSI/ISO reference standards, generating consensus dossiers with actionable alerts.
+An optional checkbox sends tasks to a **same-origin FastAPI server** instead. That mode does not run on static GitHub Pages. Unavailable APIs produce visible errors rather than substitute results.
 
----
+## Python installation
 
-## ⚙️ Key Capabilities & Algorithmic Modules
+Python 3.9+ is supported. From the cloned repository:
 
-- **Deterministic Calculation Engine**: Strict compliance with ACR BI-RADS reference formulations and thresholds.
-- **Risk & Urgency Classification**: Multi-tier categorization (ROUTINE, ELEVATED_RISK, CRITICAL_STAT_PANIC) with automated clinical action recommendations.
-- **Validation & Guardrails**: Rigorous input bounds checking and anomaly detection.
-- **Zero-PHI Outbound Interceptor**: Blocks SSNs, MRNs, phone numbers, and patient identifiers from leaving the system.
-- **Tamper-Evident HMAC-SHA256 Audit Trail**: Chained, cryptographically signed logs for every evaluation.
-- **Domain Enrichment Suite**: 8 specialized engines covering 3D volume rendering, microcalcification analysis, lesion segmentation, bilateral comparison, view coordination, dense breast assessment, and artifact detection.
+~~~bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -e ".[api,dev]"
+python -m pytest -q
+~~~
 
----
+On Windows, activate the environment through its `Scripts` directory.
 
-## 🚀 Installation
+## Commands
 
-```bash
-# Clone the repository
-git clone https://github.com/abusuraihsakhri/mammography-tomosynthesis-dbt-agent.git
-cd mammography-tomosynthesis-dbt-agent
+The primary implementation is in `agents/`, with entry point `cli.py`.
 
-# Install dependencies
-pip install fastapi uvicorn pydantic pytest
-```
+~~~bash
+mammography-tomosynthesis-dbt-agent audit --task-id DEMO-001 --target SYNTH-01 --primary 29.4 --secondary 14.8 --status DISCORDANT
+mammography-tomosynthesis-dbt-agent batch -i sample.csv -o results.csv
+mammography-tomosynthesis-dbt-agent chat "status"
+mammography-tomosynthesis-dbt-agent verify-audit
+mammography-tomosynthesis-dbt-agent serve --host 127.0.0.1 --port 8000
+~~~
 
----
+The legacy `dbt_sentinel/` subsystem is retained and callable through the original installed `mammography-tomosynthesis-dbt-engine` command or `python dbt_sentinel_app.py`. These implementations differ: the primary secondary-metric cutoff is **12**, whereas the legacy cutoff is **10**. Both primary cutoffs are **25**. Neither threshold is clinically validated.
 
-## 💻 CLI Quickstart & Usage
+CSV `is_critical_flag` accepts `true`/`false`, `1`/`0` or `yes`/`no`. Ambiguous entries are rejected.
 
-### 1. Guided Interactive Mode
-```bash
-python cli.py audit
-```
+## API and security
 
-### 2. Direct Parameterized Evaluation
-```bash
-python cli.py audit --task-id TASK-001 --target TARGET-01 --primary 28.5 --secondary 14.2 --critical --status DISCORDANT
-```
+With the primary server running, open **http://127.0.0.1:8000/** for the interface and **http://127.0.0.1:8000/docs** for generated API documentation. Key endpoints: `POST /api/audit`, `POST /api/chat`, `GET /health`, `GET /metrics` and `GET /api/audit/logs`.
 
-### 3. Batch Processing
-```bash
-python cli.py batch -i sample.csv -o results.csv
-```
+- Regex-based guards reject some common identifiers in task text and metadata. This is **not comprehensive PHI detection, de-identification, HIPAA compliance, or authorization to handle clinical records**. Only use synthetic data.
+- The HMAC audit ledger is **in memory** and does not survive a process restart. Integrity verification checks recorded fields in that process, provided the signing key stays secret.
+- Configure a strong unique `AUDIT_SECRET_KEY` to make the key stable across restarts. Without one, the runtime warns and generates an ephemeral key.
+- The audit-log read endpoint is disabled until `AUDIT_READ_TOKEN` is configured; then it requires the `X-Audit-Token` request header. Other demo endpoints are unauthenticated and should not be exposed to untrusted clients without further controls.
+- Chat responses are deterministic mock text; external model providers are not implemented. The `enrichment.py` classes are generic numeric rule wrappers, **not** working rendering or segmentation engines.
+- Browser-only mode processes data locally. Explicit API mode sends JSON to the same-origin server. No external fonts or tracking scripts are loaded.
 
-### 4. System Chat
-```bash
-python cli.py chat "What is the system status?"
-```
+See [.env.example](.env.example) for configuration variables. Never commit a populated `.env`.
 
-### 5. Verify Audit Trail
-```bash
-python cli.py verify-audit
-```
+## Docker
 
-### 6. Launch REST API Server
-```bash
-python cli.py serve --host 127.0.0.1 --port 8000
-```
+~~~bash
+cp .env.example .env
+# Set AUDIT_SECRET_KEY in .env to a newly generated, strong random value.
+docker compose up --build
+~~~
 
-### Parameter Reference
-| Flag | Description | Default |
-|:-----|:------------|:--------|
-| `--task-id` | Unique task / case identifier | `TASK-2026-001` |
-| `--target` | Target specimen or entity identifier | `KEY-TARGET-01` |
-| `--primary` | Primary domain measurement (float) | `28.5` |
-| `--secondary` | Secondary kinetic/confidence score (float) | `14.2` |
-| `--critical` | Emergency escalation flag | `False` |
-| `--status` | Status code or phenotype descriptor | `DISCORDANT` |
-| `-i / --input` | Input CSV file path for batch mode | Required |
-| `-o / --output` | Output CSV file path for batch mode | `results.csv` |
+Compose refuses to start if `AUDIT_SECRET_KEY` is missing or empty. The container exposes FastAPI on port 8000.
 
-### Input Data Schema
+## Testing and technology
 
-| Field | Description | Requirement |
-|:------|:------------|:------------|
-| `task_id` | Unique case identifier | Required |
-| `target_identifier` | Specimen or entity key | Required |
-| `primary_metric` | Primary measurement value | Required |
-| `secondary_metric` | Secondary confidence/kinetic score | Optional (default: 0.0) |
-| `is_critical_flag` | Emergency escalation trigger | Optional (default: False) |
-| `status_descriptor` | Status code or phenotype | Optional (default: "NOMINAL") |
+~~~bash
+python -m pytest -q
+node --test web/logic.test.mjs
+node --check web/app.mjs
+python simulator.py 100
+~~~
 
----
+CI checks Python 3.9–3.12, installed console scripts, API routes, and JavaScript rules. Stack: Python, Pydantic, FastAPI, Uvicorn, vanilla JavaScript ES modules, and GitHub Actions. The browser interface targets current Chrome, Firefox, Safari and Edge versions supporting ES modules; a cross-browser matrix has not yet been run.
 
-## 🛡️ Security & Enterprise Architecture
+## License
 
-* **Zero-PHI Outbound Interceptor:** Active regex inspection blocking SSNs, MRNs, phone numbers, emails, DOB, and patient names.
-* **Tamper-Evident HMAC-SHA256 Audit Trail:** Chained, cryptographically signed logs for every evaluation and state transition.
-* **Configurable Audit Secret:** Set `AUDIT_SECRET_KEY` environment variable for production deployments. Without it, an ephemeral runtime key is generated (with a warning).
-* **Air-Gapped LLM Reasoning Adapter:** Agnostic integration for local Ollama instances (`llama3`, `mistral`), Claude 3.5 Sonnet, GPT-4o, and deterministic test mocks.
-* **FastAPI & Prometheus Telemetry:** Exposes OpenAPI 3.1 REST endpoints and operational Prometheus metrics (`/metrics`).
-
-### Security Configuration
-
-```bash
-# Set a persistent audit secret for production
-export AUDIT_SECRET_KEY="your-secure-random-key-here"
-
-# Or via docker-compose environment
-AUDIT_SECRET_KEY=your-secure-random-key-here
-```
-
----
-
-## 🧪 Testing & Verification
-
-Run the automated test suite:
-
-```bash
-pytest -v
-```
-
-Execute high-throughput batch simulation benchmarks:
-
-```bash
-python simulator.py 1000
-```
-
-Run the enrichment domain suite directly:
-
-```bash
-python -c "from enrichment import enrichment_suite; results = enrichment_suite.execute_all(1.5, 0.5); print(f'Executed {len(results)} domain engines')"
-```
-
----
-
-## 🐳 Container Deployment
-
-```bash
-docker build -t mammography-tomosynthesis-dbt-agent .
-docker run -p 8000:8000 -e AUDIT_SECRET_KEY=your-secure-key mammography-tomosynthesis-dbt-agent
-```
-
-Or using Docker Compose:
-
-```bash
-docker-compose up --build
-```
-
----
-
-## 📁 Project Structure
-
-```
-mammography-tomosynthesis-dbt-agent/
-├── agents/                    # Core agent framework
-│   ├── __init__.py           # Package initialization
-│   ├── api.py                # FastAPI REST endpoints
-│   ├── base.py               # Security, PHI guard, audit trail
-│   ├── learning.py           # Bayesian calibration engine
-│   ├── llm_factory.py        # LLM provider factory
-│   ├── metrics.py            # Prometheus metrics collector
-│   ├── models.py             # Pydantic data models
-│   ├── streamer.py           # WebSocket telemetry
-│   ├── supervisor.py         # Multi-worker orchestrator
-│   └── workers.py            # Specialized evaluation workers
-├── dbt_sentinel/             # DBT-Sentinel sub-system
-│   ├── __init__.py
-│   ├── agents.py             # Specialized DBT agents
-│   ├── cli.py                # DBT-Sentinel CLI
-│   ├── engine.py             # Domain evaluation engine
-│   ├── models.py             # DBT data models
-│   └── server.py             # DBT FastAPI server
-├── tests/                    # Test suite
-│   ├── test_dbt_sentinel.py
-│   ├── test_enrichment.py
-│   └── test_mammography_tomosynthesis_dbt_agent.py
-├── web/                      # Static web interface
-│   └── index.html
-├── cli.py                    # Main CLI entry point
-├── enrichment.py             # Domain enrichment engines
-├── simulator.py              # High-throughput simulator
-├── pyproject.toml            # Project configuration
-├── Dockerfile                # Container build
-├── docker-compose.yml        # Multi-service orchestration
-├── sample.csv                # Sample batch input
-├── sample_payload.json       # Sample API payload
-└── openapi_spec.json         # OpenAPI specification
-```
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT — see [LICENSE](LICENSE).

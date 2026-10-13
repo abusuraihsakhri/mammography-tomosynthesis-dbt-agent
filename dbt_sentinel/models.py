@@ -35,7 +35,7 @@ class AgentTelemetryAlert:
     summary: str
     technical_details: str
     actionable_remediation: str
-    standard_reference: str = "ACR Digital Breast Tomosynthesis Standards"
+    standard_reference: str = "Unvalidated demonstration rules"
     timestamp: str = field(default_factory=lambda: datetime.datetime.now(datetime.timezone.utc).isoformat())
 
     def to_dict(self) -> Dict[str, Any]:

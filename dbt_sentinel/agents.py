@@ -3,6 +3,8 @@ Distributed Component Coordination & Executive Hierarchy for DBT-Sentinel: Digit
 Domain: Breast Imaging AI
 """
 import uuid
+import json
+from agents.base import PHIGuard
 from typing import Dict, Any, List, Optional
 from .models import FrontierPayload, AgentTelemetryAlert, ExecutionStatus
 from .engine import FrontierDomainEngine
@@ -68,6 +70,9 @@ class DBTSentinelCoordinator:
         self.execution_ledger: Dict[str, Dict[str, Any]] = {}
 
     def process(self, payload: FrontierPayload) -> Dict[str, Any]:
+        for text in (payload.task_id, payload.target_identifier, payload.status_descriptor):
+            PHIGuard.assert_no_phi(text)
+        PHIGuard.assert_no_phi(json.dumps(payload.attributes, sort_keys=True, default=str))
         all_alerts: List[AgentTelemetryAlert] = []
         all_alerts.extend(self.sub_1.audit(payload))
         all_alerts.extend(self.sub_2.audit(payload))
@@ -93,7 +98,7 @@ class DBTSentinelCoordinator:
             "critical_count": crit_count,
             "warning_count": warn_count,
             "alerts": [a.to_dict() for a in all_alerts],
-            "standard_specification": "ACR Digital Breast Tomosynthesis Standards",
+            "standard_specification": "Demonstration-only thresholds; not clinically validated",
             "consensus_summary": f"Consensus evaluation completed across 3 sub-agents with status [{status.value}].",
         }
 
@@ -101,10 +106,11 @@ class DBTSentinelCoordinator:
         return dossier
 
     def query_supervisory_chat(self, query: str) -> str:
+        PHIGuard.assert_no_phi(query)
         q = query.strip().lower()
         if "status" in q or "ledger" in q:
-            return f"DBT-Sentinel: Digital Breast Tomosynthesis Slice Reconstruction Agent currently managing {len(self.execution_ledger)} execution tasks in air-gapped memory."
+            return f"DBT-Sentinel: Digital Breast Tomosynthesis Slice Reconstruction Agent holds {len(self.execution_ledger)} synthetic tasks in process memory."
         elif "standard" in q or "spec" in q:
-            return "Active runtime operating strictly according to ACR Digital Breast Tomosynthesis Standards specifications."
+            return "This demo is not validated against ACR Digital Breast Tomosynthesis Standards; its cutoffs are illustrative only."
         else:
-            return f"DBT-Sentinel: Digital Breast Tomosynthesis Slice Reconstruction Agent executive coordinator online. Zero-telemetry on-premises surveillance active."
+            return f"DBT-Sentinel: Digital Breast Tomosynthesis Slice Reconstruction Agent executive coordinator online. This is a synthetic-input, rules-based demonstration; it does not analyze mammograms."

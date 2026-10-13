@@ -12,6 +12,16 @@ from agents.base import AuditLogger
 supervisor = SystemSupervisor(model_provider="mock")
 
 
+def parse_csv_boolean(value: str) -> bool:
+    """Accept explicit CSV boolean literals; reject ambiguous strings."""
+    normalized = str(value).strip().lower()
+    if normalized in {"true", "1", "yes", "y"}:
+        return True
+    if normalized in {"false", "0", "no", "n", ""}:
+        return False
+    raise ValueError(f"Invalid is_critical_flag: {value!r}; use true or false.")
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="mammography-tomosynthesis-dbt-agent", description="Mammography Tomosynthesis Dbt Agent")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -56,7 +66,7 @@ def main(argv=None):
         dossier = supervisor.process_task(payload)
         print("=" * 80)
         print(f"  MAMMOGRAPHY TOMOSYNTHESIS DBT AGENT")
-        print(f"  Domain: Clinical & Biomedical AI | Standard: CAP / CLSI / ISO Standards")
+        print(f"  Scope: synthetic input rule checks | Clinical validity: none")
         print(f"  Dossier ID: {dossier.dossier_id} | Urgency: [{dossier.overall_urgency.value}]")
         print("=" * 80)
         for a in dossier.alerts:
@@ -94,7 +104,7 @@ def main(argv=None):
                 primary_metric=float(r.get("primary_metric", 15.0)),
                 secondary_metric=float(r.get("secondary_metric", 5.0)),
                 status_descriptor=r.get("status_descriptor", "NOMINAL"),
-                is_critical_flag=bool(r.get("is_critical_flag", False)),
+                is_critical_flag=parse_csv_boolean(r.get("is_critical_flag", False)),
             )
             dossier = supervisor.process_task(payload)
             row_dict = dict(r)

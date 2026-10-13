@@ -11,6 +11,16 @@ from .agents import DBTSentinelCoordinator
 coordinator = DBTSentinelCoordinator()
 
 
+def parse_csv_boolean(value: str) -> bool:
+    """Parse explicit true/false values rather than treating 'False' as true."""
+    normalized = str(value).strip().lower()
+    if normalized in {"true", "1", "yes", "y"}:
+        return True
+    if normalized in {"false", "0", "no", "n", ""}:
+        return False
+    raise ValueError(f"Invalid is_critical_flag: {value!r}; use true or false.")
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="mammography-tomosynthesis-dbt-agent", description="DBT-Sentinel: Digital Breast Tomosynthesis Slice Reconstruction Agent")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -52,7 +62,7 @@ def main(argv=None):
         dossier = coordinator.process(payload)
         print("=" * 80)
         print(f"  DBT-SENTINEL: DIGITAL BREAST TOMOSYNTHESIS SLICE RECONSTRUCTION AGENT")
-        print(f"  Domain: Breast Imaging AI | Standard: ACR Digital Breast Tomosynthesis Standards")
+        print(f"  Scope: synthetic input rule checks | Clinical validity: none")
         print(f"  Task: {dossier['task_id']} | Status: [{dossier['overall_status']}] | Total Alerts: {dossier['total_alerts']}")
         print("=" * 80)
         for a in dossier["alerts"]:
@@ -83,7 +93,7 @@ def main(argv=None):
                 primary_metric=float(r.get("primary_metric", 15.0)),
                 secondary_metric=float(r.get("secondary_metric", 5.0)),
                 status_descriptor=r.get("status_descriptor", "NOMINAL"),
-                is_critical_flag=bool(r.get("is_critical_flag", False)),
+                is_critical_flag=parse_csv_boolean(r.get("is_critical_flag", False)),
             )
             dossier = coordinator.process(payload)
             row_dict = dict(r)

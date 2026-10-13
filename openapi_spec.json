@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Mammography Tomosynthesis Dbt Engine API",
-    "description": "Enterprise Distributed Component Platform (Clinical & Cryptographic AI) adhering to CAP / CLSI / NIST Standards.",
-    "version": "3.0.0-ENTERPRISE",
+    "title": "DBT Sentinel — Synthetic Numeric Rules API",
+    "description": "Demonstration-only numeric threshold checks. No DICOM analysis, DBT reconstruction, clinical validation, or medical-device functionality.",
+    "version": "2.1.0",
     "contact": {
       "name": "Dr. Abu Suraih Sakhri",
       "url": "https://github.com/abusuraihsakhri"
@@ -22,17 +22,17 @@
     },
     "/metrics": {
       "get": {
-        "summary": "Prometheus operational metrics",
+        "summary": "In-memory demonstration counters",
         "responses": {
           "200": {
-            "description": "Prometheus text metrics"
+            "description": "JSON counters (not Prometheus text)"
           }
         }
       }
     },
     "/api/audit": {
       "post": {
-        "summary": "Dispatch task payload across specialized workers",
+        "summary": "Evaluate synthetic numeric inputs using fixed demo cutoffs",
         "requestBody": {
           "content": {
             "application/json": {
@@ -69,14 +69,17 @@
         },
         "responses": {
           "200": {
-            "description": "Consensus dossier with HMAC signature"
+            "description": "Demonstration dossier and in-memory audit-chain HMAC"
+          },
+          "422": {
+            "description": "Invalid numeric values or detected identifier pattern"
           }
         }
       }
     },
     "/api/chat": {
       "post": {
-        "summary": "Air-gapped supervisory conversational assistant",
+        "summary": "Deterministic mock supervisory reply",
         "requestBody": {
           "content": {
             "application/json": {
@@ -103,10 +106,37 @@
     },
     "/api/audit/logs": {
       "get": {
-        "summary": "Retrieve and cryptographically verify HMAC audit trail",
+        "summary": "Read audit metadata using configured X-Audit-Token",
         "responses": {
           "200": {
             "description": "Cryptographic audit trail"
+          },
+          "403": {
+            "description": "Invalid or missing token"
+          },
+          "503": {
+            "description": "Read token not configured"
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-Audit-Token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Required when AUDIT_READ_TOKEN is configured; otherwise endpoint unavailable"
+          }
+        ]
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "Serve standalone demonstration interface",
+        "responses": {
+          "200": {
+            "description": "Static HTML"
           }
         }
       }
