@@ -31,7 +31,10 @@ mammography-tomosynthesis-dbt-agent = "cli:main"
 py-modules = ["cli", "simulator", "enrichment", "dbt_sentinel_app"]
 
 [tool.setuptools.packages.find]
-include = ["agents*", "dbt_sentinel*"]
+include = ["agents*", "dbt_sentinel*", "web"]
+
+[tool.setuptools.package-data]
+web = ["*.html", "*.mjs"]
 
 [project.urls]
 Homepage = "https://github.com/abusuraihsakhri/mammography-tomosynthesis-dbt-agent"
