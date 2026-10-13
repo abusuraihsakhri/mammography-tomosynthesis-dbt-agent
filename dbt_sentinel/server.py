@@ -54,7 +54,10 @@ def create_app():
 
         @app.post("/api/chat")
         def api_chat(req: ChatRequest):
-            return {"response": coordinator.query_supervisory_chat(req.query)}
+            try:
+                return {"response": coordinator.query_supervisory_chat(req.query)}
+            except SecurityException:
+                raise HTTPException(status_code=422, detail="Use synthetic data only.") from None
 
         return app
     except ImportError:
