@@ -62,7 +62,7 @@ def main(argv=None):
         dossier = coordinator.process(payload)
         print("=" * 80)
         print(f"  DBT-SENTINEL: DIGITAL BREAST TOMOSYNTHESIS SLICE RECONSTRUCTION AGENT")
-        print(f"  Domain: Breast Imaging AI | Standard: ACR Digital Breast Tomosynthesis Standards")
+        print(f"  Scope: synthetic input rule checks | Clinical validity: none")
         print(f"  Task: {dossier['task_id']} | Status: [{dossier['overall_status']}] | Total Alerts: {dossier['total_alerts']}")
         print("=" * 80)
         for a in dossier["alerts"]:
