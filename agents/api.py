@@ -18,7 +18,7 @@ supervisor = SystemSupervisor(model_provider="mock")
 app = FastAPI(
     title="Mammography Tomosynthesis Dbt Agent API",
     description="Synthetic-input demonstration of deterministic threshold checks; not a medical device.",
-    version="3.0.0-ENTERPRISE",
+    version="2.1.0",
 )
 
 
@@ -28,7 +28,7 @@ class ChatRequest(BaseModel):
 
 @app.get("/health")
 def health():
-    return {"status": "HEALTHY", "service": "mammography-tomosynthesis-dbt-agent", "domain": "Clinical & Biomedical AI", "standard": "Unvalidated demonstration thresholds", "version": "3.0.0-ENTERPRISE"}
+    return {"status": "HEALTHY", "service": "mammography-tomosynthesis-dbt-agent", "domain": "Clinical & Biomedical AI", "standard": "Unvalidated demonstration thresholds", "version": "2.1.0"}
 
 
 @app.get("/metrics")
