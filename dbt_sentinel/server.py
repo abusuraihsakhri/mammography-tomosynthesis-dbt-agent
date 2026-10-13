@@ -17,7 +17,7 @@ def create_app():
         app = FastAPI(
             title="DBT-Sentinel: Digital Breast Tomosynthesis Slice Reconstruction Agent",
             description="Demonstration numeric-threshold checks. No DBT reconstruction or lesion detection.",
-            version="2.0.0-FRONTIER",
+            version="2.1.0",
         )
 
         class TaskRequest(BaseModel):
@@ -34,7 +34,7 @@ def create_app():
 
         @app.get("/health")
         def health():
-            return {"status": "HEALTHY", "system": "mammography-tomosynthesis-dbt-agent", "domain": "Breast Imaging AI", "version": "2.0.0-FRONTIER"}
+            return {"status": "HEALTHY", "system": "mammography-tomosynthesis-dbt-agent", "domain": "Breast Imaging AI", "version": "2.1.0"}
 
         @app.post("/api/audit")
         def api_audit(req: TaskRequest):
